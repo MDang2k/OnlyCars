@@ -3,6 +3,12 @@
 ##
 ## Get latest from `dotnet new gitignore`
 
+# Claude Code local config
+.claude/
+
+# IDE cache files
+*.lscache
+
 # dotenv files
 .env
 
