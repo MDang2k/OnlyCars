@@ -57,13 +57,13 @@ public class AuctionsController : ControllerBase
 
         _context.Auctions.Add(auction);
 
+        var newAuction = _mapper.Map<AuctionCreated>(auction);
+
+        await _publishEndpoint.Publish(_mapper.Map<AuctionCreated>(auction));        
+        
         var result = await _context.SaveChangesAsync() > 0;
 
         if (!result) return BadRequest("Failed to create auction");
-
-        var newAuction = _mapper.Map<AuctionCreated>(auction);
-
-        await _publishEndpoint.Publish(_mapper.Map<AuctionCreated>(auction));
 
         return CreatedAtAction(nameof(GetAuctionById), new { auction.Id }, _mapper.Map<AuctionDto>(auction));
     }
@@ -76,11 +76,14 @@ public class AuctionsController : ControllerBase
         if (auction == null) return NotFound();
         //TODO: check if user is the seller
 
+
         auction.Item.Make = updateAuctionDto.Make ?? auction.Item.Make;
         auction.Item.Model = updateAuctionDto.Model ?? auction.Item.Model;
         auction.Item.Year = updateAuctionDto.Year ?? auction.Item.Year;
         auction.Item.Color = updateAuctionDto.Color ?? auction.Item.Color;
         auction.Item.Mileage = updateAuctionDto.Mileage ?? auction.Item.Mileage;
+
+        await _publishEndpoint.Publish(_mapper.Map<AuctionCreated>(auction));
 
         var result = await _context.SaveChangesAsync() > 0;
 
@@ -100,10 +103,12 @@ public class AuctionsController : ControllerBase
 
         _context.Auctions.Remove(auction);
 
+        await _publishEndpoint.Publish<AuctionDeleted>(new AuctionDeleted { Id = auction.Id.ToString() });
+
         var result = await _context.SaveChangesAsync() > 0;
 
         if (!result) return BadRequest("Failed to delete auction");
 
         return Ok();
     }
-}
+} 

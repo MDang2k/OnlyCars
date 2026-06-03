@@ -22,6 +22,13 @@ builder.Services.AddMassTransit(x =>
 
     x.UsingRabbitMq((context, cfg) =>
     {
+        cfg.ReceiveEndpoint("search-auction-created", e =>
+        {
+            e.UseMessageRetry(r => r.Interval(5, TimeSpan.FromSeconds(5, 5)));
+
+            e.ConfigureConsumer<AuctionCreatedConsumer>(context);
+        });
+
         cfg.ConfigureEndpoints(context);
     });
 });
@@ -31,24 +38,24 @@ var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 
+
 app.UseAuthorization();
 
 app.MapControllers();
 
-// app.Lifetime.ApplicationStarted.Register(async () =>
-// {
-//     try
-//     {
-        
-//     }
-//     catch (Exception ex)
-//     {
-//         Console.WriteLine($"Error initializing database: {ex.Message}");
-//     }
-// });
+app.Lifetime.ApplicationStarted.Register(async () =>
+{
+    try
+    {
+        await DbInitializer.InitDb(app);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error initializing database: {ex.Message}");
+    }
+});
 
 
-await DbInitializer.InitDb(app);
 
 app.Run();
 

@@ -20,6 +20,8 @@ public class AuctionCreatedConsumer : IConsumer<AuctionCreated>
 
         var item = _mapper.Map<Item>(context.Message);
 
+        if (item.Model == "Foo") throw new Exception("Simulated exception for testing retry policy.");
+
         await DB.Default.SaveAsync(item, context.CancellationToken);
     }
 }
